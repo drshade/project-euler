@@ -18,19 +18,31 @@ import Math (sqrt)
 
 problem_12 :: Lazy Int
 problem_12 = defer \_ ->
-    let
-        triangle' :: Int -> Int -> Int
-        triangle' accum value
-            | value <= 0 = accum
-            | otherwise = triangle' (accum + value) (value - 1)
+    let triangle' :: Int -> Int -> Int
+        triangle' acc x
+            | x <= 0    = acc
+            | otherwise = triangle' (acc + x) (x - 1)
         triangle = triangle' 0
-    in
-    triangle 7
+
+        -- The secret to making this optimal is the resetting of a max as we discover new divisors
+        -- (i.e. we know both products, and we can max out at the second product)
+        divisors' :: Int -> List Int -> Int -> Int -> List Int
+        divisors' x acc cur max 
+            | cur >= max        = acc
+            | x `mod` cur == 0  = divisors' x (cur : x `div` cur : acc) (cur + 1) (x `div` cur)
+            | otherwise         = divisors' x acc (cur + 1) max
+        divisors x = divisors' x Nil 1 x
+
+        find' :: Int -> Int -> Int
+        find' target depth
+            | (length $ divisors $ triangle depth) > target = triangle depth
+            | otherwise                                     = find' target (depth + 1)
+        find x = find' x 0
+    in find 500
 
 problem_11 :: Lazy Int
 problem_11 = defer \_ ->
-    let
-        grid :: List Int
+    let grid :: List Int
         grid = """
             08 02 22 97 38 15 00 40 00 75 04 05 07 78 52 12 50 77 91 08
             49 49 99 40 17 81 18 57 60 87 17 40 98 43 69 48 04 56 62 00
@@ -108,32 +120,27 @@ problem_11 = defer \_ ->
             | idx >= length grid = max_so_far
             | max_product idx > max_so_far = find_max_product (max_product idx) (idx + 1)
             | otherwise = find_max_product max_so_far (idx + 1)
-    in
-    find_max_product 0 0
+    in find_max_product 0 0
 
 problem_10 :: Lazy BigInt
 problem_10 = defer \_ ->
-    let
-        sum_primes_to :: Int -> BigInt -> BigInt -> BigInt
+    let sum_primes_to :: Int -> BigInt -> BigInt -> BigInt
         sum_primes_to max next accum 
             | next > (fromInt max) = accum
             | prime next = sum_primes_to max (add next (fromInt 1)) (add accum next)
             | otherwise  = sum_primes_to max (add next (fromInt 1)) accum
-    in
-    sum_primes_to 1999999 (fromInt 2) (fromInt 0)
+    in sum_primes_to 1999999 (fromInt 2) (fromInt 0)
 
 problem_9 :: Lazy Int
 problem_9 = defer \_ -> 
-    let
-        -- how hacky is this! but i'm pretty proud of it
+    let -- how hacky is this! but i'm pretty proud of it
         search a b 1000 = search a (b + 1) (b + 2)
         search a 1000 c = search (a + 1) (a + 2) (a + 3)
         search 1000 b c = 0 -- exhausted our search... should find the solution before this - bug catcher
         search a b c
             | a + b + c == 1000 && (a `Data.Int.pow` 2) + (b `Data.Int.pow` 2) == (c `Data.Int.pow` 2) = a * b * c
             | otherwise = search a b (c + 1)
-    in
-    search 1 2 3
+    in search 1 2 3
 
 problem_8 :: Lazy BigInt
 problem_8 = defer \_ -> 
@@ -200,8 +207,7 @@ problem_6 = defer \_ ->
 
 problem_5 :: Lazy Int
 problem_5 = defer \_ -> 
-    let
-        -- search until we find a value which is divisible by all the values
+    let -- search until we find a value which is divisible by all the values
         search_from value
             -- SLOW! -> | range 20 11 # map (\d -> value `mod` d == 0) # all identity = value
             | value `mod` 20 == 0 && value `mod` 19 == 0 && value `mod` 18 == 0
@@ -210,13 +216,11 @@ problem_5 = defer \_ ->
                 && value `mod` 11 == 0
                 = value
             | otherwise = search_from (value + 1)
-    in
-    search_from 1
+    in search_from 1
 
 problem_4 :: Lazy Int
 problem_4 = defer \_ -> 
-    let
-        -- Is a number a palindrome?
+    let -- Is a number a palindrome?
         is_palindrome :: Int -> Boolean
         is_palindrome num =
             str_num == str_num_reversed
@@ -229,8 +233,7 @@ problem_4 = defer \_ ->
         products = 
             three_digit_numbers # concatMap (\x -> three_digit_numbers # map (\y -> x * y))
             where three_digit_numbers = range 100 999
-    in
-    products # filter is_palindrome # sort # reverse # head # fromMaybe 0
+    in products # filter is_palindrome # sort # reverse # head # fromMaybe 0
 
 -- Def some initial issues:
 --  we will overflow the int type with target value 600851475143
@@ -239,8 +242,7 @@ problem_4 = defer \_ ->
 --  as a divisor
 problem_3 :: Lazy BigInt
 problem_3 = defer \_ -> 
-    let
-        -- This is what we need to prime factor
+    let -- This is what we need to prime factor
         target = fromString "600851475143" # fromMaybe (fromInt 0)
 
         -- Calculate the prime numbers between start and end value
@@ -253,23 +255,20 @@ problem_3 = defer \_ ->
         -- Calculate the sqrt of a bigint - by cheating and using the Number implementation
         bigint_sqrt :: BigInt -> BigInt
         bigint_sqrt num = toNumber num # sqrt # fromNumber # fromMaybe num
-    in
-    primes_upto (fromInt 1) (target `div` (bigint_sqrt target)) Nil
-        # find (\prime -> target `rem` prime == (fromInt 0))
-        # fromMaybe (fromInt 0)
+    in primes_upto (fromInt 1) (target `div` (bigint_sqrt target)) Nil
+            # find (\prime -> target `rem` prime == (fromInt 0))
+            # fromMaybe (fromInt 0)
 
 problem_2 :: Lazy Int
 problem_2 = defer \_ -> 
-    let
-        is_even e = e `mod` 2 == 0
+    let is_even e = e `mod` 2 == 0
         fib_terms_upto :: Int -> List Int -> List Int
         fib_terms_upto limit accum@(x1 : x2 : _) 
             | (x1 <= limit) = fib_terms_upto limit ((x1 + x2) : accum)
         fib_terms_upto _ accum = accum
-    in
-    fib_terms_upto 4000000 (2 : 1 : Nil)
-        # filter is_even
-        # sum
+    in fib_terms_upto 4000000 (2 : 1 : Nil)
+            # filter is_even
+            # sum
 
 problem_1 :: Lazy Int
 problem_1 = defer \_ -> 
@@ -289,18 +288,17 @@ show_correct true problem_number lazy_guess correct =
     where guess = force $ lazy_guess
 
 main :: Effect Unit
-main = 
-    do
+main = do
     log "Project Euler Solutions by Tom (problems at https://projecteuler.net/show=all)"
     log (show_correct true 1  problem_1  $ 233168)
     log (show_correct true 2  problem_2  $ 4613732)
-    log (show_correct true 3  problem_3  $ fromInt 6857)                                       -- SLOW (15.92s)
+    log (show_correct true 3  problem_3  $ fromInt 6857)
     log (show_correct true 4  problem_4  $ 906609)
     log (show_correct true 5  problem_5  $ 232792560)
     log (show_correct true 6  problem_6  $ 25164150)
     log (show_correct true 7  problem_7  $ fromInt 104743)
     log (show_correct true 8  problem_8  $ fromString "23514624000" # fromMaybe (fromInt 0))
     log (show_correct true 9  problem_9  $ 31875000)
-    log (show_correct true 10 problem_10 $ fromString "142913828922" # fromMaybe (fromInt 0))  -- SLOW (21.00s)
+    log (show_correct true 10 problem_10 $ fromString "142913828922" # fromMaybe (fromInt 0))
     log (show_correct true 11 problem_11 $ 70600674)
-    log (show_correct true 12 problem_12 $ 0)
+    log (show_correct true 12 problem_12 $ 76576500)
