@@ -255,8 +255,8 @@ problem_9 :: Lazy Int
 problem_9 = defer \_ -> 
     let -- how hacky is this! but i'm pretty proud of it
         search a b 1000 = search a (b + 1) (b + 2)
-        search a 1000 c = search (a + 1) (a + 2) (a + 3)
-        search 1000 b c = 0 -- exhausted our search... should find the solution before this - bug catcher
+        search a 1000 _ = search (a + 1) (a + 2) (a + 3)
+        search 1000 _ _ = 0 -- exhausted our search... should find the solution before this - bug catcher
         search a b c
             | a + b + c == 1000 && (a `Data.Int.pow` 2) + (b `Data.Int.pow` 2) == (c `Data.Int.pow` 2) = a * b * c
             | otherwise = search a b (c + 1)
