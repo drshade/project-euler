@@ -1,5 +1,7 @@
 {
   "dependencies": {
-    "big-integer": "^1.6.51"
+    "big-integer": "^1.6.51",
+    "purescript": "0.15.10",
+    "spago": "0.21.0"
   }
 }

@@ -8,8 +8,8 @@
   , "integers"
   , "lazy"
   , "lists"
-  , "math"
   , "maybe"
+  , "numbers"
   , "prelude"
   , "strings"
   ]
