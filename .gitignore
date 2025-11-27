@@ -7,3 +7,4 @@ generated-docs/
 .purs*
 .psa*
 .spago
+dist-newstyle/
